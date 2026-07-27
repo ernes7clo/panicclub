@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=2.0">
+  <title>PANIC CLUB | minimal black shop</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Helvetica Neue', sans-serif; }
+    body { background: #000000; color: #e0e0e0; min-height: 100vh; overflow-x: hidden; }
+    #pixelOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; background: #000; opacity: 0; transition: none; }
+    .pixel-transition-active { animation: pixelateTransition 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+    @keyframes pixelateTransition {
+      0% { opacity: 0; backdrop-filter: none; } 15% { opacity: 0.85; backdrop-filter: blur(2px); }
+      35% { opacity: 1; backdrop-filter: blur(6px) contrast(1.4); image-rendering: pixelated; }
+      65% { opacity: 0.9; backdrop-filter: blur(8px) contrast(1.8); } 85% { opacity: 0.3; backdrop-filter: blur(3px); }
+      100% { opacity: 0; backdrop-filter: blur(0px); }
+    }
+    .content-fade-in { animation: contentAppear 0.4s ease-out; }
+    @keyframes contentAppear { 0% { filter: blur(3px); opacity: 0.4; transform: scale(0.98); } 100% { filter: blur(0); opacity: 1; transform: scale(1); } }
+    a, button, .clickable { cursor: pointer; transition: 0.2s ease; }
+    .top-panel { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2.5rem; border-bottom: 1px solid #2a2a2a; background: #000; position: sticky; top: 0; z-index: 100; }
+    .logo { font-size: 2.2rem; font-weight: 700; letter-spacing: 0.2rem; color: #fff; background: none; border: none; text-transform: uppercase; }
+    .nav-buttons { display: flex; gap: 2.2rem; align-items: center; }
+    .nav-btn { color: #bbb; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.15rem; background: transparent; border: none; font-weight: 500; }
+    .nav-btn:hover { color: white; }
+    .profile-icon { width: 42px; height: 42px; background: #1f1f1f; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ccc; border: 1px solid #3a3a3a; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+    .slide-panel { position: fixed; top: 0; right: -420px; width: 380px; height: 100vh; background: #0a0a0a; border-left: 1px solid #2a2a2a; z-index: 200; transition: right 0.3s ease; padding: 2rem 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 2rem; }
+    .slide-panel.open { right: 0; }
+    .overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.6); z-index: 150; display: none; }
+    .overlay.active { display: block; }
+    .close-panel { align-self: flex-end; background: none; border: none; color: #aaa; font-size: 1.8rem; }
+    .panel-btn { background: #1a1a1a; border: 1px solid #333; color: #ddd; padding: 0.8rem 1.2rem; width: 100%; text-align: left; margin: 0.3rem 0; border-radius: 8px; font-size: 0.95rem; }
+    .cart-item-mini { display: flex; gap: 1rem; margin: 0.8rem 0; border-bottom: 1px solid #222; padding-bottom: 0.6rem; align-items: center; }
+    .cart-thumb { width: 45px; height: 45px; background: #181818; object-fit: cover; }
+    input, select, textarea { background: #141414; border: 1px solid #333; color: #eee; padding: 0.7rem; border-radius: 6px; width: 100%; margin: 0.4rem 0; font-size: 0.95rem; font-family: inherit; }
+    .main-btn { background: white; color: black; font-weight: bold; padding: 0.9rem 2rem; border: none; width: 100%; text-transform: uppercase; letter-spacing: 0.1rem; }
+    .main-btn.secondary { background: #1a1a1a; color: white; border: 1px solid #444; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; padding: 2rem; }
+    .item-card { background: #0c0c0c; border: 1px solid #222; border-radius: 10px; overflow: hidden; position: relative; }
+    .image-container { position: relative; width: 100%; aspect-ratio: 3/4; background: #111; overflow: hidden; }
+    .image-container img { width: 100%; height: 100%; object-fit: cover; transition: 0.15s ease; }
+    .dots-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 20px; pointer-events: none; }
+    .dot { width: 20px; height: 3px; background: #555; transition: 0.2s; }
+    .dot.active { background: white; }
+    .styled-select { appearance: none; -webkit-appearance: none; background: #0f0f0f; border: 1px solid #333; color: #ccc; padding: 0.7rem 2.5rem 0.7rem 1.2rem; border-radius: 0px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1rem; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; transition: all 0.2s; }
+    .styled-select:hover { border-color: #555; color: #fff; }
+    .styled-select:focus { outline: none; border-color: #777; }
+    .product-page { display: flex; gap: 3rem; padding: 2rem; flex-wrap: wrap; align-items: flex-start; }
+    .product-gallery { flex: 1; min-width: 300px; max-width: 500px; }
+    .main-image-wrapper { width: 100%; aspect-ratio: 3/4; overflow: hidden; border: 1px solid #333; position: relative; }
+    .main-image { width: 100%; height: 100%; object-fit: cover; transition: transform 0.15s ease-out; cursor: zoom-in; display: block; }
+    .thumb-strip { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+    .thumb-strip img { width: 60px; height: 60px; object-fit: cover; border: 1px solid #333; cursor: pointer; opacity: 0.7; transition: 0.2s; }
+    .thumb-strip img.active-thumb { border-color: white; opacity: 1; }
+    .image-manager { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+    .image-thumb { width: 100px; height: 100px; border: 1px solid #444; cursor: grab; position: relative; border-radius: 4px; overflow: hidden; }
+    .image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .image-thumb.dragging { opacity: 0.5; border: 2px dashed white; }
+    .delete-image-btn { position: absolute; top: -8px; right: -8px; background: #c42e2e; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; z-index: 2; }
+    .add-image-btn { width: 100px; height: 100px; border: 2px dashed #555; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #888; cursor: pointer; border-radius: 4px; }
+    .brand-list { display: flex; flex-wrap: wrap; gap: 1rem; padding: 2rem; }
+    .admin-section { padding: 2rem; }
+    .news-grid { display: flex; flex-direction: column; gap: 1.5rem; padding: 2rem; }
+    .news-images { display: flex; gap: 0.5rem; margin: 1rem 0; overflow-x: auto; flex-wrap: wrap; }
+    .news-images img { max-width: 300px; max-height: 300px; object-fit: cover; border-radius: 4px; }
+    .modal-overlay { position: fixed; top:0;left:0;width:100%;height:100%; background: rgba(0,0,0,0.8); z-index: 300; display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: #111; padding: 2rem; border-radius: 0px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; border: 1px solid #2a2a2a; }
+    .order-card { background: #0f0f0f; border: 1px solid #222; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; }
+    .order-card h4 { margin-bottom: 0.5rem; }
+    .order-card p { color: #888; font-size: 0.9rem; margin: 0.2rem 0; }
+    @media (max-width: 768px) {
+      .top-panel { padding: 0.8rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+      .logo { font-size: 1.4rem; }
+      .nav-buttons { gap: 0.8rem; flex-wrap: wrap; justify-content: center; width: 100%; }
+      .nav-btn { font-size: 0.7rem; }
+      .profile-icon { width: 36px; height: 36px; font-size: 1.2rem; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; padding: 1rem; }
+      .product-page { flex-direction: column; gap: 1.5rem; padding: 1rem; }
+      .product-gallery { min-width: 100%; max-width: 100%; }
+      .slide-panel { width: 100%; right: -100%; }
+      .modal-content { max-width: 95%; padding: 1.5rem; }
+      .image-thumb { width: 70px; height: 70px; }
+      .add-image-btn { width: 70px; height: 70px; font-size: 1.5rem; }
+      h1 { font-size: 2.5rem !important; }
+      .main-btn { padding: 0.7rem 1.5rem; font-size: 0.85rem; }
+      .cart-thumb { width: 40px; height: 40px; }
+    }
+    body { padding-bottom: 80px; }
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+    #mainContent { flex: 1; }
+  </style>
+</head>
+<body>
+<div id="pixelOverlay"></div>
+<div id="app">
+  <header class="top-panel">
+    <button class="logo" id="homeLogo">PANIC CLUB</button>
+    <div class="nav-buttons">
+      <button class="nav-btn" id="backBtn" style="font-size:1.2rem;padding:0 0.5rem;">←</button>
+      <button class="nav-btn" id="forwardBtn" style="font-size:1.2rem;padding:0 0.5rem;">→</button>
+      <button class="nav-btn" id="brandsBtn">brands</button>
+      <button class="nav-btn" id="allItemsBtn">all items</button>
+      <button class="nav-btn" id="newsBtn">news</button>
+      <button class="nav-btn" id="searchBtn">search</button>
+      <div class="profile-icon" id="profileIcon">☰</div>
+    </div>
+  </header>
+  <main id="mainContent" class="content-fade-in"></main>
+  <div class="overlay" id="overlay"></div>
+  <div class="slide-panel" id="slidePanel">
+    <button class="close-panel" id="closePanel">&times;</button>
+    <div id="panelContent"></div>
+  </div>
+</div>
+
+<script>
+  const ADMIN_HASH = 'd1d0aeb2f71ee7c74295933b2d9067cc9c89621a89a85c53631acf9b70db2a92';
+  const DB_VERSION = 12;
+
+  const DB = {
+  "brands": [
+    {
+      "id": "b1784982719851",
+      "name": "If Six Was Nine",
+      "desc": ""
+    },
+    {
+      "id": "b1784982725807",
+      "name": "L. G. B.",
+      "desc": ""
+    },
+    {
+      "id": "b1785150064493",
+      "name": "ERNES7",
+      "desc": ""
+    }
+  ],
+  "products": [
+    {
+      "id": "p1784983715997",
+      "name": "LACE UP PT1/CHINO CROSS/M",
+      "desc": "100% COTTON",
+      "price": 10990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/8F490513-BFC1-49E1-8F9D-A70854F5FB6A_1024x1024@2x.jpg?v=1745817296",
+        "https://circusbymaniac.shop/cdn/shop/files/F1E42CB5-3E1E-4879-AA44-DA0F46AE34BC_1024x1024@2x.jpg?v=1745817296",
+        "https://circusbymaniac.shop/cdn/shop/files/D1E5903E-B455-44E6-869A-1491F1E9F47D_1024x1024@2x.jpg?v=1745817296",
+        "https://circusbymaniac.shop/cdn/shop/files/AA2BB7DB-96EB-44DE-BC7B-7234DB539E6A_1024x1024@2x.jpg?v=1745817296"
+      ]
+    },
+    {
+      "id": "p1784983861900",
+      "name": "D.I.E./HSC/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7921_1024x1024@2x.jpg?v=1691150346",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7922_1024x1024@2x.jpg?v=1691206106",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7923_1024x1024@2x.jpg?v=1691206106"
+      ]
+    },
+    {
+      "id": "p1784983938789",
+      "name": "SLOW/HSC/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_8540_f94ac994-e7b6-477b-8266-4c7e8a37fa95_1024x1024@2x.jpg?v=1712233365",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_8542_1e6b3a9f-07b4-4ffb-8da1-c740af65705a_1024x1024@2x.jpg?v=1712233365",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_8541_11bd3107-d817-4fcf-b726-12097832e8cd_1024x1024@2x.jpg?v=1712233365"
+      ]
+    },
+    {
+      "id": "p1784985007517",
+      "name": "BLUE PARROT/TK/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_0663_1024x1024@2x.jpg?v=1687267620",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_0664_1024x1024@2x.jpg?v=1687267620"
+      ]
+    },
+    {
+      "id": "p1784988628143",
+      "name": "I NEED YOUR LOVE/TK/M",
+      "desc": "100% COTTON",
+      "price": 4990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/7DB4692C-760F-4061-BBAE-1D2309A41C4F_540x.jpg?v=1682492657",
+        "https://circusbymaniac.shop/cdn/shop/files/87A819F4-5FE0-40B0-9357-21937AEB487A_1024x1024@2x.jpg?v=1682492657",
+        "https://circusbymaniac.shop/cdn/shop/files/BBF108E6-D72D-4074-B471-CCC601D379B8_1024x1024@2x.jpg?v=1682492657"
+      ]
+    },
+    {
+      "id": "p1784988700316",
+      "name": "FIVE QUARTET/TK/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/b9513fe447510ff57c76_1024x1024@2x.jpg?v=1616480864",
+        "https://circusbymaniac.shop/cdn/shop/products/6e86e945b8c50b1ecde4_1024x1024@2x.jpg?v=1616480865",
+        "https://circusbymaniac.shop/cdn/shop/products/e1f24a8dc93644afa6aa_1024x1024@2x.jpg?v=1616480865"
+      ]
+    },
+    {
+      "id": "p1784988799150",
+      "name": "PARKA/STD/FNR/M",
+      "desc": "45% COTTON 35% WOOL 18% NYLON 2% CASHMERE",
+      "price": 11990,
+      "category": "Zips",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/image_c7095127-e9d4-44f5-8cae-7a70c94cf297_1024x1024@2x.jpg?v=1665111942",
+        "https://circusbymaniac.shop/cdn/shop/products/image_37ca47ef-1f42-45aa-9c32-9b6207546459_1024x1024@2x.jpg?v=1665111942",
+        "https://circusbymaniac.shop/cdn/shop/products/image_84eaf844-b1b4-4646-b6fe-c2786ae0ebbe_1024x1024@2x.jpg?v=1665111829",
+        "https://circusbymaniac.shop/cdn/shop/products/image_5199ebee-3912-46a4-9219-cb1872c3b100_1024x1024@2x.jpg?v=1665111829",
+        "https://circusbymaniac.shop/cdn/shop/products/image_21c56389-040c-490a-a273-71470d6f0387_1024x1024@2x.jpg?v=1665111991",
+        "https://circusbymaniac.shop/cdn/shop/products/image_b262aa30-6bb7-4ef1-b051-044e92f94e8a_1024x1024@2x.jpg?v=1665111991",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG-5057_9e2c07d8-0b36-4aef-95a3-b7d3bac36b9d_1024x1024@2x.jpg?v=1728393464"
+      ]
+    },
+    {
+      "id": "p1784988876329",
+      "name": "MUD MAX/LUZ/BCM",
+      "desc": "100% COTTON",
+      "price": 13990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6308_1024x1024@2x.jpg?v=1688111325",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6310_1024x1024@2x.jpg?v=1688111146",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6309_1024x1024@2x.jpg?v=1688111325",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6311_1024x1024@2x.jpg?v=1688111147"
+      ]
+    },
+    {
+      "id": "p1784988932685",
+      "name": "B.L.U/BB",
+      "desc": "100% COTTON",
+      "price": 11990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/415D7CEA-C6B3-403C-A664-28202A4DF934_1024x1024@2x.jpg?v=1739960215",
+        "https://circusbymaniac.shop/cdn/shop/files/3651066D-42D3-430E-8A7A-BB3D6967EAA8_1024x1024@2x.jpg?v=1739960215",
+        "https://circusbymaniac.shop/cdn/shop/files/ECA24C91-C633-4E3F-957B-5C241ED7DC4C_1024x1024@2x.jpg?v=1739960216",
+        "https://circusbymaniac.shop/cdn/shop/files/5EAF990A-0173-436A-9E75-E034D41B04D6_1024x1024@2x.jpg?v=1739960215"
+      ]
+    },
+    {
+      "id": "p1784989036800",
+      "name": "MUD MAX/LU/BCM",
+      "desc": "100% COTTON",
+      "price": 12990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/414E75EA-1B7C-4117-AA21-A33BC70BA460_1024x1024@2x.jpg?v=1741947597",
+        "https://circusbymaniac.shop/cdn/shop/files/96C56A34-91FF-4336-957D-735AF81EEAD8_1024x1024@2x.jpg?v=1741926228",
+        "https://circusbymaniac.shop/cdn/shop/files/AD400E6E-D7E1-4934-B264-AD26C3A42D7C_1024x1024@2x.jpg?v=1741947597",
+        "https://circusbymaniac.shop/cdn/shop/files/43A45A5C-58FD-458B-A332-AA3F7CA39C4E_1024x1024@2x.jpg?v=1741947597",
+        "https://circusbymaniac.shop/cdn/shop/files/580B8098-57DD-41D4-98A1-9A005CE1AFAB_1024x1024@2x.jpg?v=1741947597",
+        "https://circusbymaniac.shop/cdn/shop/files/405F3E8B-C0E3-40EB-B4DB-A009BBE9B523_1024x1024@2x.jpg?v=1741926228"
+      ]
+    },
+    {
+      "id": "p1785002567457",
+      "name": "GYPSYISM/HSV/M",
+      "desc": "100% COTTON",
+      "price": 4990,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/image_54dbfc52-8070-4e2b-8f34-3b2464fe0967_1024x1024@2x.jpg?v=1670592375",
+        "https://circusbymaniac.shop/cdn/shop/products/image_a483025a-db2a-4165-8c9b-a8a33b396806_1024x1024@2x.jpg?v=1670512348",
+        "https://circusbymaniac.shop/cdn/shop/products/image_707373e4-e2b0-4b07-8fa4-59601743c0e2_1024x1024@2x.jpg?v=1670592375"
+      ]
+    },
+    {
+      "id": "p1785002742339",
+      "name": "MUDMAX/TKM",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/B9891357-AF20-450B-8878-896E923F1D72_1024x1024@2x.jpg?v=1772187121",
+        "https://circusbymaniac.shop/cdn/shop/files/727674E7-0109-40E5-8C5A-1D851A63A09C_1024x1024@2x.jpg?v=1772187120",
+        "https://circusbymaniac.shop/cdn/shop/files/ABC80B02-0C14-4088-976E-B6144B346CEA_1024x1024@2x.jpg?v=1772187120",
+        "https://circusbymaniac.shop/cdn/shop/files/564A40BD-C587-493E-9168-5678FE205698_1024x1024@2x.jpg?v=1772187120"
+      ]
+    },
+    {
+      "id": "p1785002853263",
+      "name": "BONE-2/HSC/M",
+      "desc": "100% COTTON",
+      "price": 4690,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/6D30B0B1-D3A2-47BB-AC3C-A79CF806CFBE_1024x1024@2x.jpg?v=1772808876",
+        "https://circusbymaniac.shop/cdn/shop/files/8A9683EF-C1F8-491A-B549-1257ED6A0803_1024x1024@2x.jpg?v=1772808876",
+        "https://circusbymaniac.shop/cdn/shop/files/FE87EB36-0681-440F-935D-F6BE6A3DCA50_1024x1024@2x.jpg?v=1772808875",
+        "https://circusbymaniac.shop/cdn/shop/files/CC58013D-261F-4344-9623-96DB9F1B47F0_1024x1024@2x.jpg?v=1772808876"
+      ]
+    },
+    {
+      "id": "p1785003148481",
+      "name": "LACE UP PT1/CHINO CROSS/M",
+      "desc": "100% COTTON",
+      "price": 10990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/3E3DE91E-9CD2-4966-8C7D-C5669EB62FB2_1024x1024@2x.jpg?v=1745847237",
+        "https://circusbymaniac.shop/cdn/shop/files/9DAC6A8C-A851-4DEE-9C4D-A67E6AA73A7B_1024x1024@2x.jpg?v=1745847237",
+        "https://circusbymaniac.shop/cdn/shop/files/F6A0020A-01DA-4C21-8362-EDF7C664E8A2_1024x1024@2x.jpg?v=1745847237",
+        "https://circusbymaniac.shop/cdn/shop/files/636EA42E-A7C9-40A5-A8CA-7EB785B51003_1024x1024@2x.jpg?v=1745847237"
+      ]
+    },
+    {
+      "id": "p1785003371462",
+      "name": "LACE UP PT1/M",
+      "desc": "100% COTTON",
+      "price": 9490,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_1634_5b5f2e05-f495-4092-93d3-e320ff3082ba_1024x1024@2x.jpg?v=1738324805",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_1637_edea2996-2ef5-49b6-9bb7-ec059318e6f9_1024x1024@2x.jpg?v=1738324791",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_1635_1024x1024@2x.jpg?v=1738324805",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_1636_7a27bca2-a024-40e1-beeb-01c4e7aa1599_1024x1024@2x.jpg?v=1738324791",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_1638_dca59865-4943-458b-a148-54f35fbd42c0_1024x1024@2x.jpg?v=1738324791",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_1639_b15f98d4-ee3e-4402-ab6c-d5ccc07d831c_1024x1024@2x.jpg?v=1738324791"
+      ]
+    },
+    {
+      "id": "p1785003469454",
+      "name": "DEAD OR ALIVE/TK1M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_3129_1024x1024@2x.jpg?v=1707126721",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_3131_1024x1024@2x.jpg?v=1707106812",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_3130_1024x1024@2x.jpg?v=1707126721",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_3132_1024x1024@2x.jpg?v=1707106811"
+      ]
+    },
+    {
+      "id": "p1785003583551",
+      "name": "REBIRTH/TK/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4761_67683845-4aca-4e67-a760-5806d4784720_1024x1024@2x.jpg?v=1701855328",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4758_1024x1024@2x.jpg?v=1701855328",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4757_1024x1024@2x.jpg?v=1701855329",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4760_1024x1024@2x.jpg?v=1701855329",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4759_1024x1024@2x.jpg?v=1701855329"
+      ]
+    },
+    {
+      "id": "p1785003739877",
+      "name": "BONE LEAF/HSC/M",
+      "desc": "100% COTTON",
+      "price": 5490,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7006_1024x1024@2x.jpg?v=1689077217",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7008_1024x1024@2x.jpg?v=1689077216",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7007_1024x1024@2x.jpg?v=1689077217"
+      ]
+    },
+    {
+      "id": "p1785004054218",
+      "name": "BONE-2/TK/M",
+      "desc": "100% COTTON",
+      "price": 3990,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7034_10a7c1b7-4be9-43e6-b2d8-f4c1ae537d1f_1024x1024@2x.jpg?v=1689145225"
+      ]
+    },
+    {
+      "id": "p1785004126813",
+      "name": "TK1/STRETCH/M",
+      "desc": "100% COTTON",
+      "price": 3490,
+      "category": "Tank-tops",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/A0FF69E6-4068-458F-8AC9-4E1C450F26E6_1024x1024@2x.jpg?v=1773725038",
+        "https://circusbymaniac.shop/cdn/shop/files/94745266-E2B9-4F8B-9B66-02DADAE64BC3_1024x1024@2x.jpg?v=1773725038"
+      ]
+    },
+    {
+      "id": "p1785004451689",
+      "name": "LHSC/M",
+      "desc": "100% COTTON",
+      "price": 4990,
+      "category": "Longsleeves",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/B26856E7-D481-4CE5-B009-3D7D0F7EA526_1024x1024@2x.jpg?v=1772011289",
+        "https://circusbymaniac.shop/cdn/shop/files/17ABA38B-7698-4DA5-BA37-49340AE9391B_1024x1024@2x.jpg?v=1772011268",
+        "https://circusbymaniac.shop/cdn/shop/files/AE87FC79-3464-477B-907F-D7D7A24D28A7_1024x1024@2x.jpg?v=1772011268"
+      ]
+    },
+    {
+      "id": "p1785004536325",
+      "name": "FREEDOM/HSC/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/image_796ebfae-8ead-4cc1-8e9f-f71e7a4bd590_1024x1024@2x.jpg?v=1667564532",
+        "https://circusbymaniac.shop/cdn/shop/products/image_81387c3f-ee17-45b1-8bc5-e4d703ffd031_1024x1024@2x.jpg?v=1667563283",
+        "https://circusbymaniac.shop/cdn/shop/products/image_f5ee59ca-7880-4235-afd4-98f2b4c1d088_1024x1024@2x.jpg?v=1667564532",
+        "https://circusbymaniac.shop/cdn/shop/products/image_a7b10de3-291f-457b-a585-cc4ab18cbc3d_1024x1024@2x.jpg?v=1667563284"
+      ]
+    },
+    {
+      "id": "p1785004580677",
+      "name": "SECRET SERVICE/HSC/M",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/3d7e66990727e2b57b49_1024x1024@2x.jpg?v=1615278988",
+        "https://circusbymaniac.shop/cdn/shop/products/a3352a92b7ac7381b680_1024x1024@2x.jpg?v=1615278988"
+      ]
+    },
+    {
+      "id": "p1785004724500",
+      "name": "HSC/SHOOT TOWARD TOMORROW!/U",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tees",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/47001869-4C4E-49BB-91A3-4B2B3D89B23F_1024x1024@2x.jpg?v=1679462277",
+        "https://circusbymaniac.shop/cdn/shop/products/10408158-5864-4896-B42B-3B94363C4A08_1024x1024@2x.jpg?v=1679462277"
+      ]
+    },
+    {
+      "id": "p1785005816495",
+      "name": "ST103-B2D/M (CROCODILE-OW)",
+      "desc": "100% COTTON",
+      "price": 10990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/34ae313af3e95dc51c1f_1024x1024@2x.jpg?v=1615280804",
+        "https://circusbymaniac.shop/cdn/shop/products/fff85ab2b52371bbeeb4_1024x1024@2x.jpg?v=1615280804",
+        "https://circusbymaniac.shop/cdn/shop/products/c013e37516c411694524_1024x1024@2x.jpg?v=1615280805",
+        "https://circusbymaniac.shop/cdn/shop/products/61f39668396ae6488dd9_1024x1024@2x.jpg?v=1615280805"
+      ]
+    },
+    {
+      "id": "p1785006022752",
+      "name": "WOLF/BF",
+      "desc": "100% COTTON",
+      "price": 10990,
+      "category": "Pants",
+      "sizes": [
+        "0",
+        "1",
+        "2"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4050_f6b2e3b7-6d33-42a8-bd5e-66be7bf47490_1024x1024@2x.jpg?v=1699601343",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4052_ff494bce-180a-48e5-afa8-b6238015f99a_1024x1024@2x.jpg?v=1699599716",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4051_f3d348ae-6fb2-4c60-bdc2-855b73c5f463_1024x1024@2x.jpg?v=1699601343",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4054_1024x1024@2x.jpg?v=1699599717",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_4053_1024x1024@2x.jpg?v=1699599717"
+      ]
+    },
+    {
+      "id": "p1785150177789",
+      "name": "Crop tee",
+      "desc": "100% COTTON",
+      "price": 2490,
+      "category": "Tees",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/1c/a2/2b/1ca22be07eb9974fa448787fdaffbacb.jpg"
+      ]
+    },
+    {
+      "id": "p1785150585729",
+      "name": "Fitted zip",
+      "desc": "100% COTTON, ECO-LEATHER",
+      "price": 7990,
+      "category": "Zips",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/a7/1f/fc/a71ffc91c179d63c7a4072a70b511fd6.jpg",
+        "https://i.pinimg.com/736x/89/69/ca/8969caded7d6437308577ca742f4219b.jpg",
+        "https://i.pinimg.com/736x/cf/fb/30/cffb30beb66c10512e6d6bf2af50466f.jpg"
+      ]
+    },
+    {
+      "id": "p1785150658078",
+      "name": "Tank-top",
+      "desc": "100% COTTON",
+      "price": 5990,
+      "category": "Tank-tops",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/36/37/20/363720a77dc1ebde6c5d017d86774c2a.jpg",
+        "https://i.pinimg.com/736x/54/e7/e7/54e7e7c8c232f07813ef4bfef651e5a0.jpg",
+        "https://i.pinimg.com/736x/62/03/d2/6203d243262e6ebe35f4846576ee6f79.jpg"
+      ]
+    },
+    {
+      "id": "p1785150790589",
+      "name": "Linen crop tee",
+      "desc": "100% LINEN",
+      "price": 4490,
+      "category": "Tees",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/9c/e8/bc/9ce8bcb63cea0a766de1db30580974f4.jpg",
+        "https://i.pinimg.com/736x/f3/96/5c/f3965c2f69b3894d3c613112337c2c7a.jpg",
+        "https://i.pinimg.com/736x/32/74/8d/32748df86d670add6d8084a0a77343b4.jpg"
+      ]
+    },
+    {
+      "id": "p1785151137757",
+      "name": "Asymmetrical bag",
+      "desc": "90% COTTON, 10% PL",
+      "price": 3490,
+      "category": "Accessories",
+      "sizes": [
+        "Onesize"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/fd/4a/27/fd4a275f1020978dd6a425d7cc49f5f1.jpg",
+        "https://i.pinimg.com/736x/3f/78/2e/3f782e09951094372746ff25ba3e1372.jpg",
+        "https://i.pinimg.com/736x/11/10/09/11100948712f62466985ae00ebdd0845.jpg",
+        "https://i.pinimg.com/736x/97/ab/ee/97abeea373e08260ca59f61bc4b9d31c.jpg"
+      ]
+    },
+    {
+      "id": "p1785151218133",
+      "name": "Longsleeve",
+      "desc": "95% COTTON, 5% PL",
+      "price": 4790,
+      "category": "Longsleeves",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/0f/46/6f/0f466fd4958470e4f31f8eb27ede4ba2.jpg",
+        "https://i.pinimg.com/736x/30/13/dc/3013dcdaf03cbf7db5498b27b7977446.jpg",
+        "https://i.pinimg.com/736x/42/e1/58/42e158dd22803267a70efe6d7c0c2484.jpg"
+      ]
+    },
+    {
+      "id": "p1785151293850",
+      "name": "Nosleeve",
+      "desc": "95% COTTON, 5% PL",
+      "price": 4550,
+      "category": "Tees",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/db/3d/d8/db3dd8d1cf77d52353b3e7c5a64cd03c.jpg",
+        "https://i.pinimg.com/736x/af/c0/60/afc060f0b3160ed4d541bf9a8a63446b.jpg",
+        "https://i.pinimg.com/736x/a7/0f/cc/a70fcc9a45a4baf25cc764f2429dd095.jpg",
+        "https://i.pinimg.com/736x/37/d0/2b/37d02b7c66f3674d0c4de6920137490d.jpg"
+      ]
+    },
+    {
+      "id": "p1785151350790",
+      "name": "Tee",
+      "desc": "90% COTTON, 10% PL",
+      "price": 1490,
+      "category": "Tees",
+      "sizes": [
+        "Mini",
+        "Big",
+        "Giant"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "https://i.pinimg.com/736x/21/3b/07/213b070f3e820fb49305b8589fab9cc7.jpg",
+        "https://i.pinimg.com/736x/2e/72/b2/2e72b2aedb6198884aeadc15a588bd2c.jpg",
+        "https://i.pinimg.com/736x/22/96/90/22969016727a562af0e714728b132814.jpg"
+      ]
+    }
+  ],
+  "news": [
+    {
+      "id": "n1784986812512",
+      "text": "Got new care labels",
+      "date": "2026-07-25",
+      "images": [
+        "https://allwebs.ru/images/2026/07/25/119d71189111849843a8a72f5dd3fd28.jpg"
+      ]
+    },
+    {
+      "id": "n1784986171594",
+      "text": "finally",
+      "date": "2026-07-25",
+      "images": []
+    }
+  ],
+    orders: []
+  };
+
+  const CATEGORIES = ['Tees', 'Tank-tops', 'Longsleeves', 'Pants', 'Shorts', 'Zips', 'Hoodies', 'Jackets', 'Coats', 'Accessories', 'Shoes'];
+  let isAdmin = false, cart = [], currentView = 'home', selectedBrandFilter = null, selectedProductId = null;
+  let historyStack = [], historyIndex = -1;
+
+  function triggerPixelTransition(callback) {
+    const overlay = document.getElementById('pixelOverlay');
+    overlay.classList.add('pixel-transition-active');
+    setTimeout(() => { if (callback) callback(); setTimeout(() => overlay.classList.remove('pixel-transition-active'), 50); }, 180);
+  }
+  function navigateTo(view, productId = null, addToHistory = true) {
+    triggerPixelTransition(() => {
+      if (addToHistory) { if (historyIndex < historyStack.length - 1) historyStack = historyStack.slice(0, historyIndex + 1); historyStack.push({ view, productId }); historyIndex = historyStack.length - 1; }
+      currentView = view; if (productId) selectedProductId = productId; else if (view !== 'product') selectedProductId = null;
+      renderApp(); updateNavButtons();
+    });
+  }
+  function goBack() { if (historyIndex > 0) { historyIndex--; const page = historyStack[historyIndex]; currentView = page.view; selectedProductId = page.productId || null; if (currentView !== 'product') selectedProductId = null; renderApp(); updateNavButtons(); } }
+  function goForward() { if (historyIndex < historyStack.length - 1) { historyIndex++; const page = historyStack[historyIndex]; currentView = page.view; selectedProductId = page.productId || null; if (currentView !== 'product') selectedProductId = null; renderApp(); updateNavButtons(); } }
+  function updateNavButtons() {
+    const backBtn = document.getElementById('backBtn'), forwardBtn = document.getElementById('forwardBtn');
+    if (backBtn) { backBtn.style.opacity = historyIndex > 0 ? '1' : '0.3'; backBtn.style.pointerEvents = historyIndex > 0 ? 'auto' : 'none'; }
+    if (forwardBtn) { forwardBtn.style.opacity = historyIndex < historyStack.length - 1 ? '1' : '0.3'; forwardBtn.style.pointerEvents = historyIndex < historyStack.length - 1 ? 'auto' : 'none'; }
+  }
+  function saveState() { localStorage.setItem('panic_club_db', JSON.stringify(DB)); localStorage.setItem('panic_cart', JSON.stringify(cart)); localStorage.setItem('panic_admin', isAdmin ? 'true' : 'false'); localStorage.setItem('panic_db_version', String(DB_VERSION)); }
+  function loadState() {
+    const savedVersion = localStorage.getItem('panic_db_version');
+    if (savedVersion !== String(DB_VERSION)) { localStorage.removeItem('panic_club_db'); localStorage.setItem('panic_db_version', String(DB_VERSION)); }
+    const savedDb = localStorage.getItem('panic_club_db'); if(savedDb) { try { Object.assign(DB, JSON.parse(savedDb)); } catch(e) { localStorage.removeItem('panic_club_db'); } }
+    const savedCart = localStorage.getItem('panic_cart'); if(savedCart) { try { cart = JSON.parse(savedCart); } catch(e) { cart = []; } }
+    const savedAdmin = localStorage.getItem('panic_admin'); if(savedAdmin === 'true') isAdmin = true;
+  }
+  loadState();
+
+  function renderApp() {
+    const main = document.getElementById('mainContent'); main.innerHTML = ''; main.classList.remove('content-fade-in'); void main.offsetWidth; main.classList.add('content-fade-in');
+    if(currentView === 'home') renderHome();
+    else if(currentView === 'brands') renderBrands();
+    else if(currentView === 'allItems') renderAllItems();
+    else if(currentView === 'news') renderNews();
+    else if(currentView === 'search') renderSearch();
+    else if(currentView === 'product') renderProductPage();
+    else if(currentView === 'admin') renderAdmin();
+    else if(currentView === 'adminBrands') renderAdminBrands();
+    else if(currentView === 'adminProducts') renderAdminProducts();
+    else if(currentView === 'adminOrders') renderAdminOrders();
+    updateProfileIcon();
+  }
+  function updateProfileIcon() { const icon = document.getElementById('profileIcon'); icon.textContent = '☰'; icon.style.fontSize = '1.5rem'; icon.style.lineHeight = '1'; }
+  function openPanel(contentHtml) { document.getElementById('panelContent').innerHTML = contentHtml; document.getElementById('slidePanel').classList.add('open'); document.getElementById('overlay').classList.add('active'); }
+  function closePanel() { document.getElementById('slidePanel').classList.remove('open'); document.getElementById('overlay').classList.remove('active'); }
+  function buildProfilePanel() {
+    let html = `<h3 style="color:white;">Menu</h3><button class="panel-btn" id="panelCart">Cart (${cart.length})</button>`;
+    if(isAdmin) html += `<button class="panel-btn" id="panelAdmin">Admin Panel</button><button class="panel-btn" id="panelLogout">Exit admin</button>`;
+    else html += `<button class="panel-btn" id="panelLogin">Admin login</button>`;
+    return html;
+  }
+  async function hashPin(pin) { const msgBuffer = new TextEncoder().encode(pin); const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer); return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join(''); }
+  async function checkAdminPassword() { const pin = prompt('Enter admin PIN:'); if(pin) { const hash = await hashPin(pin); if(hash === ADMIN_HASH) { isAdmin = true; saveState(); closePanel(); renderApp(); } else alert('Wrong PIN'); } }
+
+  function renderHome() { document.getElementById('mainContent').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70vh;text-align:center;"><h1 style="font-size:4rem;letter-spacing:0.5rem;">PANIC CLUB</h1><p style="color:#888;max-width:500px;margin:1.5rem 0;">Sew myself. ERNES7 branching.</p><a href="https://t.me/ernestsews" target="_blank" style="background:white;color:black;padding:1rem 3rem;text-decoration:none;font-weight:bold;letter-spacing:0.2rem;">Individual Order</a></div>`; }
+  function renderBrands() { const sorted = [...DB.brands].sort((a,b)=> a.name.localeCompare(b.name)); let html = '<h2 style="padding:2rem;">Brands</h2><div class="brand-list">'; sorted.forEach(b => html += `<div class="item-card" style="padding:1.5rem;cursor:pointer;" data-brandid="${b.id}"><h3>${b.name}</h3><p>${b.desc}</p></div>`); html += '</div>'; document.getElementById('mainContent').innerHTML = html; document.querySelectorAll('.item-card[data-brandid]').forEach(card => { card.addEventListener('click', () => { selectedBrandFilter = card.dataset.brandid; navigateTo('allItems'); }); }); }
+  
+  function renderAllItems(filterBrand = null, categoryFilter = null, sortByPrice = null) {
+    let items = [...DB.products]; const activeBrand = filterBrand || selectedBrandFilter; if(activeBrand) items = items.filter(p => p.brand === activeBrand); if(categoryFilter) items = items.filter(p => p.category === categoryFilter);
+    if(sortByPrice === 'asc') items.sort((a,b)=> a.price - b.price); else if(sortByPrice === 'desc') items.sort((a,b)=> b.price - a.price); else items.sort(()=> Math.random() - 0.5);
+    let html = `<div style="padding:1rem 2rem;display:flex;gap:1.5rem;flex-wrap:wrap;"><select class="styled-select" id="sortPrice" style="width:auto;"><option value="">sort by price</option><option value="asc">price: low to high</option><option value="desc">price: high to low</option></select><select class="styled-select" id="catFilter" style="width:auto;"><option value="">all categories</option>${CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div><div class="grid">`;
+    items.forEach(p => { html += `<div class="item-card" data-id="${p.id}"><div class="image-container" data-images='${JSON.stringify(p.images)}'><img src="${p.images[0]}" alt="${p.name}"><div class="dots-indicator">${p.images.map((_,i)=>`<span class="dot ${i===0?'active':''}"></span>`).join('')}</div></div><div style="padding:1rem;"><h4>${p.name}</h4><p>${p.price} RUB</p></div></div>`; });
+    html += '</div>'; document.getElementById('mainContent').innerHTML = html;
+    document.getElementById('sortPrice')?.addEventListener('change', function(e){ renderAllItems(selectedBrandFilter, document.getElementById('catFilter')?.value, e.target.value); });
+    document.getElementById('catFilter')?.addEventListener('change', function(e){ renderAllItems(selectedBrandFilter, e.target.value, document.getElementById('sortPrice')?.value); });
+    document.querySelectorAll('.image-container').forEach(container => { const images = JSON.parse(container.dataset.images); const imgEl = container.querySelector('img'); const dots = container.querySelectorAll('.dot'); if(images.length <= 1) return; container.addEventListener('mousemove', (e) => { const rect = container.getBoundingClientRect(); const index = Math.min(Math.floor((e.clientX - rect.left)/rect.width * images.length), images.length-1); imgEl.src = images[index]; dots.forEach((d,i)=> d.classList.toggle('active', i===index)); }); container.addEventListener('mouseleave', () => { imgEl.src = images[0]; dots.forEach((d,i)=> d.classList.toggle('active', i===0)); }); });
+    document.querySelectorAll('.item-card').forEach(card => { card.addEventListener('click', (e) => { if(!e.target.closest('select')) navigateTo('product', card.dataset.id); }); });
+  }
+
+  function renderProductPage() {
+    const product = DB.products.find(p => p.id === selectedProductId); if(!product) return;
+    document.getElementById('mainContent').innerHTML = `<div class="product-page"><div class="product-gallery"><div class="main-image-wrapper"><img src="${product.images[0]}" class="main-image" id="mainProductImage"></div><div class="thumb-strip">${product.images.map((img,i)=>`<img src="${img}" data-index="${i}" class="${i===0?'active-thumb':''}">`).join('')}</div></div><div style="flex:1;"><h2>${product.name}</h2><p style="font-size:1.8rem;">${product.price} RUB</p><p>${product.desc}</p><select class="styled-select" id="sizeSelect" style="width:auto;">${product.sizes.map(s=>`<option>${s}</option>`).join('')}</select><button class="main-btn" id="addToCartBtn" style="margin-top:1rem;">Add to cart</button></div></div>`;
+    const mainImg = document.getElementById('mainProductImage'); const wrapper = document.querySelector('.main-image-wrapper');
+    wrapper.addEventListener('mousemove', (e) => { const rect = wrapper.getBoundingClientRect(); mainImg.style.transformOrigin = `${(e.clientX-rect.left)/rect.width*100}% ${(e.clientY-rect.top)/rect.height*100}%`; mainImg.style.transform = 'scale(2.2)'; });
+    wrapper.addEventListener('mouseleave', ()=> mainImg.style.transform = 'scale(1)');
+    document.querySelectorAll('.thumb-strip img').forEach(thumb => { thumb.addEventListener('click', (e) => { mainImg.src = e.target.src; document.querySelectorAll('.thumb-strip img').forEach(t => t.classList.remove('active-thumb')); e.target.classList.add('active-thumb'); }); });
+    document.getElementById('addToCartBtn').addEventListener('click', ()=>{ cart.push({ productId: product.id, size: document.getElementById('sizeSelect').value, name: product.name, price: product.price, image: product.images[0] }); saveState(); alert('Added to cart'); });
+  }
+
+  function renderNews() { /* unchanged, kept from original */ let html = '<h2 style="padding:2rem;">News</h2>'; if(isAdmin) html += '<div style="padding:0 2rem 1rem;"><button id="addNewsBtn" class="main-btn" style="width:auto;">+ Add news</button></div>'; html += '<div class="news-grid">'; DB.news.forEach(n => { const imgHtml = n.images?.length ? `<div class="news-images">${n.images.map(i=>`<img src="${i}">`).join('')}</div>` : ''; html += `<div style="background:#0f0f0f;padding:1.5rem;border-radius:8px;"><p>${n.text}</p>${imgHtml}<small>${n.date}</small>${isAdmin?`<div style="margin-top:0.8rem;"><button data-editnews="${n.id}" style="background:#fff;color:#000;border:none;padding:0.3rem 0.8rem;margin-right:0.3rem;">edit</button><button data-delnews="${n.id}" style="background:#c42e2e;color:#fff;border:none;padding:0.3rem 0.8rem;">delete</button></div>`:''}</div>`; }); html += '</div>'; document.getElementById('mainContent').innerHTML = html; document.getElementById('addNewsBtn')?.addEventListener('click', ()=> showNewsForm()); document.querySelectorAll('[data-editnews]').forEach(b=>b.addEventListener('click', e=>showNewsForm(e.target.dataset.editnews))); document.querySelectorAll('[data-delnews]').forEach(b=>b.addEventListener('click', e=>{ if(confirm('Delete?')){ DB.news=DB.news.filter(n=>n.id!==e.target.dataset.delnews); saveState(); renderNews(); } })); }
+  function showNewsForm(editId=null) { /* unchanged */ const item = editId ? DB.news.find(n=>n.id===editId) : null; const images = item ? [...item.images] : []; document.getElementById('mainContent').innerHTML = `<div class="modal-overlay"><div class="modal-content"><h3>${editId?'Edit':'New'} News</h3><textarea id="newsText" style="min-height:100px;">${item?.text||''}</textarea><label style="color:#aaa;margin-top:1rem;">Images</label><div class="image-manager" id="newsImageManager"></div><button class="main-btn" id="saveNewsBtn" style="margin-top:1rem;">Save</button><button class="main-btn secondary" id="cancelNewsBtn">Cancel</button></div></div>`; const mgr = document.getElementById('newsImageManager'); let dragIdx = null; function renderImg(){ mgr.innerHTML=''; images.forEach((img,i)=>{ const d=document.createElement('div'); d.style.position='relative'; d.draggable=true; d.dataset.index=i; d.className='image-thumb'; d.innerHTML=`<img src="${img}"><span class="delete-image-btn" data-index="${i}">x</span>`; d.addEventListener('dragstart',e=>{dragIdx=i;d.classList.add('dragging')}); d.addEventListener('dragend',()=>d.classList.remove('dragging')); d.addEventListener('dragover',e=>e.preventDefault()); d.addEventListener('drop',e=>{e.preventDefault();const t=parseInt(d.dataset.index);if(dragIdx!==null&&dragIdx!==t){const m=images.splice(dragIdx,1)[0];images.splice(t,0,m);renderImg();}dragIdx=null;}); mgr.appendChild(d); }); const add=document.createElement('div');add.className='add-image-btn';add.textContent='+'; add.addEventListener('click',()=>{const u=prompt('URL:');if(u?.trim()){images.push(u.trim());renderImg();}}); mgr.appendChild(add); document.querySelectorAll('.delete-image-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();images.splice(parseInt(b.dataset.index),1);renderImg();})); } renderImg(); document.getElementById('cancelNewsBtn').addEventListener('click',()=>navigateTo('news')); document.getElementById('saveNewsBtn').addEventListener('click',()=>{ const t=document.getElementById('newsText').value.trim(); if(!t) return alert('Text required'); if(editId){const i=DB.news.findIndex(n=>n.id===editId);DB.news[i]={...DB.news[i],text:t,images:[...images]};} else DB.news.unshift({id:'n'+Date.now(),text:t,date:new Date().toISOString().split('T')[0],images:[...images]}); saveState(); navigateTo('news'); }); }
+  function renderSearch() { /* unchanged */ document.getElementById('mainContent').innerHTML = `<div style="max-width:600px;margin:3rem auto;padding:0 2rem;"><h2>Search</h2><input id="searchInput" placeholder="Type..." autocomplete="off" style="font-size:1.1rem;padding:1rem;"><div id="searchResults" style="margin-top:1.5rem;"></div></div>`; const inp=document.getElementById('searchInput'), res=document.getElementById('searchResults'); inp.addEventListener('input',()=>{ const q=inp.value.trim().toLowerCase(); if(!q){res.innerHTML='';return;} const f=DB.products.filter(p=>p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q)||(DB.brands.find(b=>b.id===p.brand)?.name||'').toLowerCase().includes(q)); res.innerHTML=f.length?f.map(p=>`<div class="search-result-item" data-id="${p.id}" style="display:flex;gap:1rem;padding:1rem;border-bottom:1px solid #222;cursor:pointer;"><img src="${p.images[0]}" style="width:60px;height:80px;object-fit:cover;"><div><b>${p.name}</b><p style="color:#888;">${p.category} | ${DB.brands.find(b=>b.id===p.brand)?.name||''}</p><p>${p.price} RUB</p></div></div>`).join(''):'<p style="color:#666;padding:2rem;">Nothing found</p>'; document.querySelectorAll('.search-result-item').forEach(i=>{i.addEventListener('click',()=>navigateTo('product',i.dataset.id));i.addEventListener('mouseenter',()=>i.style.background='#1a1a1a');i.addEventListener('mouseleave',()=>i.style.background='transparent');}); }); setTimeout(()=>inp.focus(),100); }
+
+  function renderAdmin() { document.getElementById('mainContent').innerHTML = `<div class="admin-section"><h2>Admin Panel</h2><button class="main-btn" id="adminProductsBtn">Manage products</button><button class="main-btn secondary" id="adminBrandsBtn" style="margin-top:1rem;">Manage brands</button><button class="main-btn secondary" id="adminOrdersBtn" style="margin-top:1rem;">Orders</button></div>`; document.getElementById('adminProductsBtn').addEventListener('click',()=>navigateTo('adminProducts')); document.getElementById('adminBrandsBtn').addEventListener('click',()=>navigateTo('adminBrands')); document.getElementById('adminOrdersBtn').addEventListener('click',()=>navigateTo('adminOrders')); }
+
+  function renderAdminOrders() {
+    if(!DB.orders || DB.orders.length === 0) { document.getElementById('mainContent').innerHTML = '<h2 style="padding:2rem;">Orders</h2><p style="padding:0 2rem;color:#888;">No orders yet</p>'; return; }
+    let html = '<h2 style="padding:2rem;">Orders</h2>';
+    DB.orders.forEach((order, i) => {
+      html += `<div class="order-card"><h4>Order #${i+1} — ${order.date}</h4><p><b>Contact:</b> ${order.email || 'N/A'}</p><p><b>Name:</b> ${order.fullName}</p><p><b>Phone:</b> ${order.phone}</p><p><b>Shipping:</b> ${order.shipping}</p><p><b>Address:</b> ${order.address}</p><p><b>Items:</b></p>`;
+      order.items.forEach(item => { html += `<p style="margin-left:1rem;">— ${item.name} (size ${item.size}) — ${item.price} RUB</p>`; });
+      html += `<p style="margin-top:0.5rem;"><b>Items total:</b> ${order.itemsTotal} RUB</p><p><b>Shipping:</b> ${order.shippingCost} RUB</p><p style="font-weight:bold;">Total: ${order.total} RUB</p></div>`;
+    });
+    document.getElementById('mainContent').innerHTML = html;
+  }
+
+  function renderAdminProducts() { /* unchanged */ let h='<h2 style="padding:1rem 2rem;">Products</h2><button id="addProductBtn" class="main-btn" style="width:auto;margin:0 2rem;">+ Add</button><div class="grid">'; DB.products.forEach(p=>h+=`<div class="item-card"><img src="${p.images[0]}" style="height:150px;width:100%;object-fit:cover;"><div style="padding:0.8rem;"><b>${p.name}</b><br><button data-editid="${p.id}" style="background:#fff;color:#000;border:none;padding:0.3rem 0.8rem;margin-right:0.3rem;">edit</button><button data-deleteid="${p.id}" style="background:#c42e2e;color:#fff;border:none;padding:0.3rem 0.8rem;">delete</button></div></div>`); h+='</div>'; document.getElementById('mainContent').innerHTML=h; document.getElementById('addProductBtn').addEventListener('click',()=>showProductForm()); document.querySelectorAll('[data-editid]').forEach(b=>b.addEventListener('click',e=>showProductForm(e.target.dataset.editid))); document.querySelectorAll('[data-deleteid]').forEach(b=>b.addEventListener('click',e=>{if(confirm('Delete?')){DB.products=DB.products.filter(p=>p.id!==e.target.dataset.deleteid);saveState();renderAdminProducts();}})); }
+  function showProductForm(editId=null){ /* unchanged */ const prod=editId?DB.products.find(p=>p.id===editId):null; const images=prod?[...prod.images]:[]; document.getElementById('mainContent').innerHTML=`<div class="modal-overlay"><div class="modal-content"><h3>${editId?'Edit':'New'} Product</h3><input id="pName" value="${prod?.name||''}" placeholder="Name"><input id="pDesc" value="${prod?.desc||''}" placeholder="Desc"><input id="pPrice" type="number" value="${prod?.price||''}" placeholder="Price"><select class="styled-select" id="pCat">${CATEGORIES.map(c=>`<option ${prod?.category===c?'selected':''}>${c}</option>`).join('')}</select><input id="pSizes" value="${prod?.sizes.join(',')||''}" placeholder="Sizes"><select class="styled-select" id="pBrand">${DB.brands.map(b=>`<option value="${b.id}" ${prod?.brand===b.id?'selected':''}>${b.name}</option>`).join('')}</select><label style="color:#aaa;">Images</label><div class="image-manager" id="imageManager"></div><button class="main-btn" id="saveProductBtn">Save</button><button class="main-btn secondary" id="cancelModal">Cancel</button></div></div>`; const mgr=document.getElementById('imageManager'); let dI=null; function renderImg(){ mgr.innerHTML=''; images.forEach((img,i)=>{ const d=document.createElement('div'); d.style.position='relative'; d.draggable=true; d.dataset.index=i; d.className='image-thumb'; d.innerHTML=`<img src="${img}"><span class="delete-image-btn" data-index="${i}">x</span>`; d.addEventListener('dragstart',e=>{dI=i;d.classList.add('dragging')}); d.addEventListener('dragend',()=>d.classList.remove('dragging')); d.addEventListener('dragover',e=>e.preventDefault()); d.addEventListener('drop',e=>{e.preventDefault();const t=parseInt(d.dataset.index);if(dI!==null&&dI!==t){const m=images.splice(dI,1)[0];images.splice(t,0,m);renderImg();}dI=null;}); mgr.appendChild(d); }); const add=document.createElement('div');add.className='add-image-btn';add.textContent='+'; add.addEventListener('click',()=>{const u=prompt('URL:');if(u?.trim()){images.push(u.trim());renderImg();}}); mgr.appendChild(add); document.querySelectorAll('.delete-image-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();images.splice(parseInt(b.dataset.index),1);renderImg();})); } renderImg(); document.getElementById('cancelModal').addEventListener('click',()=>navigateTo('adminProducts')); document.getElementById('saveProductBtn').addEventListener('click',()=>{ const n=document.getElementById('pName').value; if(!n||images.length===0) return alert('Name + image required'); const d={name:n,desc:document.getElementById('pDesc').value,price:+document.getElementById('pPrice').value,category:document.getElementById('pCat').value,sizes:document.getElementById('pSizes').value.split(',').map(s=>s.trim()),brand:document.getElementById('pBrand').value,images:[...images]}; if(editId){const i=DB.products.findIndex(p=>p.id===editId);DB.products[i]={...DB.products[i],...d};} else DB.products.push({id:'p'+Date.now(),...d}); saveState(); navigateTo('adminProducts'); }); }
+  function renderAdminBrands(){ /* unchanged */ let h='<h2 style="padding:1rem 2rem;">Brands</h2><button id="addBrandBtn" class="main-btn" style="width:auto;margin:0 2rem;">+ Add</button><div class="brand-list">'; DB.brands.forEach(b=>h+=`<div class="item-card" style="padding:1.5rem;"><h3>${b.name}</h3><button data-delbrand="${b.id}" style="background:#c42e2e;color:#fff;border:none;padding:0.3rem 0.8rem;">delete</button></div>`); h+='</div>'; document.getElementById('mainContent').innerHTML=h; document.getElementById('addBrandBtn').addEventListener('click',()=>{const n=prompt('Brand:');if(n){DB.brands.push({id:'b'+Date.now(),name:n,desc:''});saveState();renderAdminBrands();}}); document.querySelectorAll('[data-delbrand]').forEach(b=>b.addEventListener('click',e=>{DB.brands=DB.brands.filter(b=>b.id!==e.target.dataset.delbrand);saveState();renderAdminBrands();})); }
+
+  function buildCartPanel(){
+    if(cart.length===0) return '<p>Cart is empty</p><button class="main-btn" id="goShoppingBtn">Go shopping</button>';
+    let items=cart.map((item,i)=>`<div class="cart-item-mini"><img src="${item.image}" class="cart-thumb"><div style="flex:1;"><b>${item.name}</b><br>size ${item.size}<br>${item.price} RUB</div><button class="remove-cart-item" data-index="${i}" style="background:none;border:none;color:#888;font-size:1.2rem;">x</button></div>`).join('');
+    const shipping=700, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
+    return `<h3>Cart</h3>${items}<input placeholder="Full name" id="fullName"><input placeholder="Phone" id="phone"><input placeholder="Email or Telegram @username" id="email"><select class="styled-select" id="shipping"><option>CDEK</option><option>Russian Post</option><option>Yandex Delivery</option></select><input placeholder="Address / postal code" id="address"><p style="margin:1rem 0;">Items: ${itemsTotal} RUB</p><p style="color:#888;">Shipping: ${shipping} RUB</p><p style="font-weight:bold;">Total: ${total} RUB</p><button class="main-btn" id="checkoutBtn">Check out</button>`;
+  }
+
+  document.getElementById('homeLogo').addEventListener('click',()=>{selectedBrandFilter=null;navigateTo('home');});
+  document.getElementById('backBtn').addEventListener('click',goBack);
+  document.getElementById('forwardBtn').addEventListener('click',goForward);
+  document.getElementById('brandsBtn').addEventListener('click',()=>navigateTo('brands'));
+  document.getElementById('allItemsBtn').addEventListener('click',()=>{selectedBrandFilter=null;navigateTo('allItems');});
+  document.getElementById('newsBtn').addEventListener('click',()=>navigateTo('news'));
+  document.getElementById('searchBtn').addEventListener('click',()=>navigateTo('search'));
+  document.getElementById('profileIcon').addEventListener('click',()=>{ openPanel(buildProfilePanel()); setTimeout(()=>{ document.getElementById('panelLogin')?.addEventListener('click',()=>{checkAdminPassword();}); document.getElementById('panelCart')?.addEventListener('click',()=>{openPanel(buildCartPanel());attachCartEvents();}); document.getElementById('panelAdmin')?.addEventListener('click',()=>{navigateTo('admin');closePanel();}); document.getElementById('panelLogout')?.addEventListener('click',()=>{isAdmin=false;saveState();closePanel();renderApp();}); },50); });
+  document.getElementById('closePanel').addEventListener('click',closePanel);
+  document.getElementById('overlay').addEventListener('click',closePanel);
+
+  function attachCartEvents(){
+    document.querySelectorAll('.remove-cart-item').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();cart.splice(parseInt(b.dataset.index),1);saveState();openPanel(buildCartPanel());attachCartEvents();}));
+    document.getElementById('goShoppingBtn')?.addEventListener('click',()=>{navigateTo('allItems');closePanel();});
+    const checkout=document.getElementById('checkoutBtn');
+    if(checkout){
+      checkout.addEventListener('click',async()=>{
+        const shipping=700, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
+        const full=document.getElementById('fullName')?.value||'', phone=document.getElementById('phone')?.value||'', email=document.getElementById('email')?.value||'';
+        const ship=document.getElementById('shipping')?.value||'', addr=document.getElementById('address')?.value||'';
+        
+        // Сохраняем заказ в DB.orders
+        DB.orders.unshift({
+          id: 'ord'+Date.now(),
+          date: new Date().toISOString().split('T')[0],
+          email, fullName: full, phone, shipping: ship, address: addr,
+          items: [...cart], itemsTotal, shippingCost: shipping, total
+        });
+        saveState();
+        
+        try{
+          const orderText = `🛒 NEW ORDER\n\n👤 ${full}\n📞 ${phone}\n✈️ ${ship}\n📍 ${addr}\n📱 ${email}\n\n📦 Items:\n${cart.map(item => `— ${item.name} (size ${item.size}) — ${item.price} RUB`).join('\n')}\n\n💰 Items: ${itemsTotal} RUB\n🚚 Shipping: ${shipping} RUB\n💳 Total: ${total} RUB`;
+
+fetch(`https://api.telegram.org/bot8727806887:AAEMqjvEWUuqP9_3IshPs2OqL9kdLRM9r3Q/sendMessage?chat_id=7887717687&text=${encodeURIComponent(orderText)}`);
+          checkout.textContent='Loading...'; checkout.disabled=true;
+          const res=await fetch('https://panicclub.ernes7existence.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:`Order: ${full}, ${email}, ${phone}, ${ship}, ${addr}`})});
+          const data=await res.json();
+          if(data.confirmation?.confirmation_url) window.location.href=data.confirmation.confirmation_url;
+          else { alert('Payment error'); checkout.textContent='Check out'; checkout.disabled=false; }
+        }catch(e){ alert('Service unavailable'); checkout.textContent='Check out'; checkout.disabled=false; }
+      });
+    }
+  }
+
+  historyStack=[{view:'home',productId:null}]; historyIndex=0; renderApp(); updateNavButtons();
+</script>
+ <footer style="width: 100%; padding: 2rem; text-align: center; background: #000; border-top: 1px solid #1a1a1a; margin-top: auto;">
+    <p style="color: #fff; font-size: 0.8rem; letter-spacing: 0.2rem; margin-bottom: 0.2rem;">PANIC CLUB 2026</p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      Реквизиты:
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      НПД Дорофеев Егор Андреевич &nbsp;|&nbsp; ИНН 471609753311
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      Связаться: в Telegram: @ernestsews | по номеру телефона +7 952 216 89 13 | по почте ernes7existence@gmail.com & panicclub.clo@gmail.com
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      Terms of use: Оформляя заказ, покупатель соглашается с условиями: 1-Товар. В каталоге представлены швейные изделия. Все изделия являются авторской работой, созданной из собственных материалов. Фотографии товаров соответствуют фактическому внешнему виду.
+    </p>
+     <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      Оформляя заказ, покупатель соглашается с условиями:
+    </p>
+     <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      1. Товар В каталоге представлены швейные изделия. Все изделия являются авторской работой, созданной из заказных материалов. Фотографии товаров соответствуют их реальному внешнему виду.
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      2. Оформление заказа
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      Заказ оформляется через корзину на сайте. После оформления с вами связывается продавец для подтверждения заказа и уточнения деталей доставки.
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+3. Оплата
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+Оплата производится онлайн через платёжную систему ЮKassa. Принимаются банковские карты Visa, Mastercard, МИР, а также оплата через СБП.
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+4. Доставка
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+Доставка осуществляется службами CDEK, Почта России или Яндекс Доставка по выбору покупателя. Стоимость доставки фиксированная — 800 рублей. После оплаты изделия проходят процесс пошива, который может занять от 2-х дней до 2-х месяцев, в зависимости от нагруженности и сложности созднания. Срок доставки зависит от региона и обычно составляет 3-14 рабочих дней.
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+5. Возврат и обмен
+    </p>
+    <p style="color: #333; font-size: 0.6rem; letter-spacing: 0.05rem; opacity: 0.6; margin: 0;">
+      Возврат возможен при нахождении брака в течение 7 дней с момента получения (для доказательств нужны фото или видеоматериалы, подтверждающие брак). Если товар "не понравился" или "не подошёл", то он возврату не подлежит.
+    </p>
+  </footer>
+</body>
+</html>
