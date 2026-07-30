@@ -115,7 +115,7 @@
 
 <script>
   const ADMIN_HASH = 'd1d0aeb2f71ee7c74295933b2d9067cc9c89621a89a85c53631acf9b70db2a92';
-  const DB_VERSION = 7;
+  const DB_VERSION = 15;
 
   const DB = {
       "brands": [
@@ -1012,11 +1012,78 @@
   function showProductForm(editId=null){ /* unchanged */ const prod=editId?DB.products.find(p=>p.id===editId):null; const images=prod?[...prod.images]:[]; document.getElementById('mainContent').innerHTML=`<div class="modal-overlay"><div class="modal-content"><h3>${editId?'Edit':'New'} Product</h3><input id="pName" value="${prod?.name||''}" placeholder="Name"><input id="pDesc" value="${prod?.desc||''}" placeholder="Desc"><input id="pPrice" type="number" value="${prod?.price||''}" placeholder="Price"><select class="styled-select" id="pCat">${CATEGORIES.map(c=>`<option ${prod?.category===c?'selected':''}>${c}</option>`).join('')}</select><input id="pSizes" value="${prod?.sizes.join(',')||''}" placeholder="Sizes"><select class="styled-select" id="pBrand">${DB.brands.map(b=>`<option value="${b.id}" ${prod?.brand===b.id?'selected':''}>${b.name}</option>`).join('')}</select><label style="color:#aaa;">Images</label><div class="image-manager" id="imageManager"></div><button class="main-btn" id="saveProductBtn">Save</button><button class="main-btn secondary" id="cancelModal">Cancel</button></div></div>`; const mgr=document.getElementById('imageManager'); let dI=null; function renderImg(){ mgr.innerHTML=''; images.forEach((img,i)=>{ const d=document.createElement('div'); d.style.position='relative'; d.draggable=true; d.dataset.index=i; d.className='image-thumb'; d.innerHTML=`<img src="${img}"><span class="delete-image-btn" data-index="${i}">x</span>`; d.addEventListener('dragstart',e=>{dI=i;d.classList.add('dragging')}); d.addEventListener('dragend',()=>d.classList.remove('dragging')); d.addEventListener('dragover',e=>e.preventDefault()); d.addEventListener('drop',e=>{e.preventDefault();const t=parseInt(d.dataset.index);if(dI!==null&&dI!==t){const m=images.splice(dI,1)[0];images.splice(t,0,m);renderImg();}dI=null;}); mgr.appendChild(d); }); const add=document.createElement('div');add.className='add-image-btn';add.textContent='+'; add.addEventListener('click',()=>{const u=prompt('URL:');if(u?.trim()){images.push(u.trim());renderImg();}}); mgr.appendChild(add); document.querySelectorAll('.delete-image-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();images.splice(parseInt(b.dataset.index),1);renderImg();})); } renderImg(); document.getElementById('cancelModal').addEventListener('click',()=>navigateTo('adminProducts')); document.getElementById('saveProductBtn').addEventListener('click',()=>{ const n=document.getElementById('pName').value; if(!n||images.length===0) return alert('Name + image required'); const d={name:n,desc:document.getElementById('pDesc').value,price:+document.getElementById('pPrice').value,category:document.getElementById('pCat').value,sizes:document.getElementById('pSizes').value.split(',').map(s=>s.trim()),brand:document.getElementById('pBrand').value,images:[...images]}; if(editId){const i=DB.products.findIndex(p=>p.id===editId);DB.products[i]={...DB.products[i],...d};} else DB.products.push({id:'p'+Date.now(),...d}); saveState(); navigateTo('adminProducts'); }); }
   function renderAdminBrands(){ /* unchanged */ let h='<h2 style="padding:1rem 2rem;">Brands</h2><button id="addBrandBtn" class="main-btn" style="width:auto;margin:0 2rem;">+ Add</button><div class="brand-list">'; DB.brands.forEach(b=>h+=`<div class="item-card" style="padding:1.5rem;"><h3>${b.name}</h3><button data-delbrand="${b.id}" style="background:#c42e2e;color:#fff;border:none;padding:0.3rem 0.8rem;">delete</button></div>`); h+='</div>'; document.getElementById('mainContent').innerHTML=h; document.getElementById('addBrandBtn').addEventListener('click',()=>{const n=prompt('Brand:');if(n){DB.brands.push({id:'b'+Date.now(),name:n,desc:''});saveState();renderAdminBrands();}}); document.querySelectorAll('[data-delbrand]').forEach(b=>b.addEventListener('click',e=>{DB.brands=DB.brands.filter(b=>b.id!==e.target.dataset.delbrand);saveState();renderAdminBrands();})); }
 
-  function buildCartPanel(){
+   function buildCartPanel(){
     if(cart.length===0) return '<p>Cart is empty</p><button class="main-btn" id="goShoppingBtn">Go shopping</button>';
     let items=cart.map((item,i)=>`<div class="cart-item-mini"><img src="${item.image}" class="cart-thumb"><div style="flex:1;"><b>${item.name}</b><br>size ${item.size}<br>${item.price} RUB</div><button class="remove-cart-item" data-index="${i}" style="background:none;border:none;color:#888;font-size:1.2rem;">x</button></div>`).join('');
     const shipping=700, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
-    return `<h3>Cart</h3>${items}<input placeholder="Full name" id="fullName"><input placeholder="Phone" id="phone"><input placeholder="Email or Telegram @username" id="email"><select class="styled-select" id="shipping"><option>CDEK</option><option>Russian Post</option><option>Yandex Delivery</option></select><input placeholder="Address / postal code" id="address"><p style="margin:1rem 0;">Items: ${itemsTotal} RUB</p><p style="color:#888;">Shipping: ${shipping} RUB</p><p style="font-weight:bold;">Total: ${total} RUB</p><button class="main-btn" id="checkoutBtn">Check out</button>`;
+    
+    return `<h3>Cart</h3>${items}
+      <style>
+        /* Полупрозрачный текст в placeholder */
+        #slidePanel input::placeholder, #slidePanel textarea::placeholder { color: #666; opacity: 0.7; }
+        
+        /* Контейнер для поля со звездочкой */
+        #slidePanel .field-wrapper { position: relative; margin-top: 0.6rem; }
+        #slidePanel .field-wrapper input, #slidePanel .field-wrapper textarea, #slidePanel .field-wrapper select { 
+          margin-top: 0; 
+          width: 100%; 
+        }
+        
+        /* Красная звездочка */
+        #slidePanel .red-star {
+          position: absolute;
+          right: 12px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #ff4444;
+          font-weight: bold;
+          font-size: 1.2rem;
+          pointer-events: none; /* Чтобы звездочка не мешала кликать по полю */
+        }
+        
+        /* Для textarea звездочку немного поднимаем */
+        #slidePanel .field-wrapper.textarea-star .red-star {
+          top: 14px;
+          transform: none;
+        }
+      </style>
+
+      <div class="field-wrapper">
+        <input placeholder="Full name" id="fullName">
+        <span class="red-star">*</span>
+      </div>
+      
+      <div class="field-wrapper">
+        <input placeholder="Phone number" id="phone">
+        <span class="red-star">*</span>
+      </div>
+      
+      <div class="field-wrapper">
+        <input placeholder="Email or Telegram @username" id="email">
+        <span class="red-star">*</span>
+      </div>
+      
+      <div class="field-wrapper" style="margin-top:0.6rem;">
+        <select class="styled-select" id="shipping">
+          <option>CDEK</option>
+          <option>Russian Post</option>
+          <option>Yandex Delivery</option>
+        </select>
+      </div>
+      
+      <div class="field-wrapper">
+        <input placeholder="Order pickup point address / postal code" id="address">
+        <span class="red-star">*</span>
+      </div>
+      
+      <div class="field-wrapper textarea-star">
+        <textarea id="orderComment" placeholder="Comment to order (size, color, wishes...)" style="min-height: 80px; resize: vertical;"></textarea>
+      </div>
+      
+      <p style="margin:1rem 0 0.3rem;">Items: ${itemsTotal} RUB</p>
+      <p style="color:#888;">Shipping: ${shipping} RUB</p>
+      <p style="font-weight:bold; margin: 0.5rem 0 1rem;">Total: ${total} RUB</p>
+      <button class="main-btn" id="checkoutBtn">Check out</button>`;
   }
 
   document.getElementById('homeLogo').addEventListener('click',()=>{selectedBrandFilter=null;navigateTo('home');});
@@ -1036,34 +1103,71 @@
     const checkout=document.getElementById('checkoutBtn');
     if(checkout){
       checkout.addEventListener('click',async()=>{
-        const shipping=700, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
-        const full=document.getElementById('fullName')?.value||'', phone=document.getElementById('phone')?.value||'', email=document.getElementById('email')?.value||'';
-        const ship=document.getElementById('shipping')?.value||'', addr=document.getElementById('address')?.value||'';
+        // Считываем значения
+        const full = document.getElementById('fullName')?.value?.trim() || '';
+        const phone = document.getElementById('phone')?.value?.trim() || '';
+        const email = document.getElementById('email')?.value?.trim() || '';
+        const ship = document.getElementById('shipping')?.value || '';
+        const addr = document.getElementById('address')?.value?.trim() || '';
+        const comment = document.getElementById('orderComment')?.value?.trim() || '—';
+        
+        // 1. Проверка на пустые поля
+        if (!full) { alert('Пожалуйста, укажите ваше ФИО.'); return; }
+        if (!phone) { alert('Пожалуйста, укажите номер телефона.'); return; }
+        if (!email) { alert('Пожалуйста, укажите Email или Telegram @username.'); return; }
+        if (!addr) { alert('Пожалуйста, укажите адрес пункта выдачи / почтовый индекс.'); return; }
+
+        // 2. Дополнительная валидация формата
+        // Проверяем, что в телефоне есть хотя бы цифры (можно вводить +7, 8, 8999 и т.д.)
+        if (!/\d/.test(phone)) { alert('Пожалуйста, введите корректный номер телефона (должны быть цифры).'); return; }
+        
+        // Проверяем, что в поле email/username есть либо @ (для почты), либо @ (для телеграма) - по сути, это просто проверка, что введено что-то похожее на контакт
+        if (!email.includes('@')) { alert('Пожалуйста, введите корректный Email (с @) или Telegram (с @).'); return; }
+
+        // Если всё ок — считаем итоги
+        const shipping = 700, itemsTotal = cart.reduce((s,i)=>s+i.price,0), total = itemsTotal+shipping;
         
         // Сохраняем заказ в DB.orders
         DB.orders.unshift({
           id: 'ord'+Date.now(),
           date: new Date().toISOString().split('T')[0],
           email, fullName: full, phone, shipping: ship, address: addr,
+          comment: comment,
           items: [...cart], itemsTotal, shippingCost: shipping, total
         });
         saveState();
         
         try{
-          const orderText = `🛒 NEW ORDER\n\n👤 ${full}\n📞 ${phone}\n✈️ ${ship}\n📍 ${addr}\n📱 ${email}\n\n📦 Items:\n${cart.map(item => `— ${item.name} (size ${item.size}) — ${item.price} RUB`).join('\n')}\n\n💰 Items: ${itemsTotal} RUB\n🚚 Shipping: ${shipping} RUB\n💳 Total: ${total} RUB`;
+          const orderText = `🛒 NEW ORDER\n\n👤 ${full}\n📞 ${phone}\n✈️ ${ship}\n📍 ${addr}\n📱 ${email}\n💬 Comment: ${comment}\n\n📦 Items:\n${cart.map(item => `— ${item.name} (size ${item.size}) — ${item.price} RUB`).join('\n')}\n\n💰 Items: ${itemsTotal} RUB\n🚚 Shipping: ${shipping} RUB\n💳 Total: ${total} RUB`;
 
-fetch(`https://api.telegram.org/bot8727806887:AAEMqjvEWUuqP9_3IshPs2OqL9kdLRM9r3Q/sendMessage?chat_id=7887717687&text=${encodeURIComponent(orderText)}`);
+          fetch(`https://api.telegram.org/bot8727806887:AAEMqjvEWUuqP9_3IshPs2OqL9kdLRM9r3Q/sendMessage?chat_id=7887717687&text=${encodeURIComponent(orderText)}`);
+          
           checkout.textContent='Loading...'; checkout.disabled=true;
           const res=await fetch('https://panicclub.ernes7existence.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:`Order: ${full}, ${email}, ${phone}, ${ship}, ${addr}`})});
           const data=await res.json();
           if(data.confirmation?.confirmation_url) window.location.href=data.confirmation.confirmation_url;
-          else { alert('Payment error'); checkout.textContent='Check out'; checkout.disabled=false; }
-        }catch(e){ alert('Service unavailable'); checkout.textContent='Check out'; checkout.disabled=false; }
+          else { alert('Ошибка оплаты. Попробуйте позже.'); checkout.textContent='Check out'; checkout.disabled=false; }
+        }catch(e){ 
+          console.error(e);
+          alert('Сервис оплаты временно недоступен. Попробуйте позже или свяжитесь с нами в Telegram.'); 
+          checkout.textContent='Check out'; checkout.disabled=false; 
+        }
       });
     }
   }
 
-  historyStack=[{view:'home',productId:null}]; historyIndex=0; renderApp(); updateNavButtons();
+  historyStack=[{view:'home',productId:null}]; historyIndex=0;
+
+// Проверка успешной оплаты при возврате с ЮKassa
+if (window.location.search.includes('payment_success=true')) {
+  cart = [];
+  saveState();
+  setTimeout(() => {
+    alert('Оплата прошла успешно! По возникшим вопросам писать на почту panicclub.clo@gmail.com или в Телеграм @ernestsews');
+  }, 500);
+}
+
+renderApp(); updateNavButtons();
 </script>
  <footer style="width: 100%; padding: 2rem; text-align: center; background: #000; border-top: 1px solid #1a1a1a; margin-top: auto;">
     <p style="color: #fff; font-size: 0.8rem; letter-spacing: 0.2rem; margin-bottom: 0.2rem;">PANIC CLUB 2026</p>
