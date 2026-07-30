@@ -115,10 +115,10 @@
 
 <script>
   const ADMIN_HASH = 'd1d0aeb2f71ee7c74295933b2d9067cc9c89621a89a85c53631acf9b70db2a92';
-  const DB_VERSION = 5;
+  const DB_VERSION = 6;
 
   const DB = {
-  "brands": [
+    "brands": [
     {
       "id": "b1784982719851",
       "name": "If Six Was Nine",
@@ -762,6 +762,75 @@
         "https://i.pinimg.com/736x/2e/72/b2/2e72b2aedb6198884aeadc15a588bd2c.jpg",
         "https://i.pinimg.com/736x/22/96/90/22969016727a562af0e714728b132814.jpg"
       ]
+    },
+    {
+      "id": "p1785193992572",
+      "name": "If Six Was Nine blank tee",
+      "desc": "100% COTTON | ALL colors of these tee are aviable to order! Just dm me in Telegram @ernestsews and tell me color you want or order tee aviable here.",
+      "price": 2990,
+      "category": "Tees",
+      "sizes": [
+        "0 Black",
+        "1 Black",
+        "2 Black",
+        "0 Brown",
+        "1 Brown",
+        "2 Brown",
+        "0 Beige",
+        "1 Beige",
+        "2 Beige"
+      ],
+      "brand": "b1784982719851",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/products/71224F35-DECA-4625-96BC-2F26331B01C2_1024x1024@2x.jpg?v=1682058904",
+        "https://circusbymaniac.shop/cdn/shop/products/733D3F75-B136-453E-BD86-5350A2A66825_1024x1024@2x.jpg?v=1682058905",
+        "https://circusbymaniac.shop/cdn/shop/products/3C4F23F7-BD57-4911-AB07-D803070832DB_1024x1024@2x.jpg?v=1682076818",
+        "https://circusbymaniac.shop/cdn/shop/products/7C5E2124-1316-4DE9-AF8A-49306E9A325E_1024x1024@2x.jpg?v=1682076818",
+        "https://circusbymaniac.shop/cdn/shop/products/35113311-E85F-4A79-80E0-6A1890ABE874_1024x1024@2x.jpg?v=1682059102",
+        "https://circusbymaniac.shop/cdn/shop/products/C4AB7C61-08FA-4984-A0FE-E2E57E43F570_1024x1024@2x.jpg?v=1682059102"
+      ]
+    },
+    {
+      "id": "p1785194377105",
+      "name": "L. G. B. blank tee",
+      "desc": "100% COTTON | ALL colors of these tee are aviable to order! Just dm me in Telegram @ernestsews and tell me color you want or order tee aviable here.",
+      "price": 2290,
+      "category": "Tees",
+      "sizes": [
+        "0 Pink",
+        "1 Pink",
+        "2 Pink",
+        "0 Blue",
+        "1 Blue",
+        "2 Blue",
+        "0 Gray",
+        "1 Gray",
+        "2 Gray",
+        "0 Lime",
+        "1 Lime",
+        "2 Lime",
+        "0 White",
+        "1 White",
+        "2 White",
+        "0 Black",
+        "1 Black",
+        "2 Black"
+      ],
+      "brand": "b1784982725807",
+      "images": [
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6505_1024x1024@2x.jpg?v=1707378049",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6506_1024x1024@2x.jpg?v=1707378049",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7453_1024x1024@2x.jpg?v=1709045145",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_7454_1024x1024@2x.jpg?v=1709045145",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_9660_540x.jpg?v=1715593707",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_9661_1024x1024@2x.jpg?v=1715593707",
+        "https://circusbymaniac.shop/cdn/shop/files/FullSizeRender_57ac1a81-0d5e-4e83-baeb-7183f8c4c8b0_540x.jpg?v=1710399705",
+        "https://circusbymaniac.shop/cdn/shop/files/FullSizeRender_2e9e5dd4-1235-4224-b05c-ef7ea5558319_1024x1024@2x.jpg?v=1710399706",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6509_1024x1024@2x.jpg?v=1707378077",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6511_1024x1024@2x.jpg?v=1707378077",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6522_4170cecb-4267-4f80-9d6e-5a18c6dba11d_540x.jpg?v=1710419850",
+        "https://circusbymaniac.shop/cdn/shop/files/IMG_6524_faeb7dd6-2f48-4b14-b1b6-4ae674ef8ab0_1024x1024@2x.jpg?v=1710419849"
+      ]
     }
   ],
   "news": [
@@ -842,7 +911,15 @@
   async function hashPin(pin) { const msgBuffer = new TextEncoder().encode(pin); const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer); return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join(''); }
   async function checkAdminPassword() { const pin = prompt('Enter admin PIN:'); if(pin) { const hash = await hashPin(pin); if(hash === ADMIN_HASH) { isAdmin = true; saveState(); closePanel(); renderApp(); } else alert('Wrong PIN'); } }
 
-  function renderHome() { document.getElementById('mainContent').innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70vh;text-align:center;"><h1 style="font-size:4rem;letter-spacing:0.5rem;">PANIC CLUB</h1><p style="color:#888;max-width:500px;margin:1.5rem 0;">Sew myself. ERNES7 branching.</p><a href="https://t.me/ernestsews" target="_blank" style="background:white;color:black;padding:1rem 3rem;text-decoration:none;font-weight:bold;letter-spacing:0.2rem;">Individual Order</a></div>`; }
+  function renderHome() {
+  document.getElementById('mainContent').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:70vh;text-align:center;">
+      <h1 style="font-size:4rem;letter-spacing:0.5rem;">PANIC CLUB</h1>
+      <p style="color:#888;max-width:500px;margin:1.5rem 0;">Sew myself. ERNES7 branching.</p>
+      <a href="https://t.me/ernestsews" target="_blank" style="background:white;color:black;padding:1rem 3rem;text-decoration:none;font-weight:bold;letter-spacing:0.2rem;margin-bottom:1rem;">Individual Order</a>
+      <a href="https://t.me/panicclub_clo" target="_blank" style="background:transparent;color:white;padding:0.8rem 2rem;text-decoration:none;font-weight:bold;letter-spacing:0.1rem;border:1px solid white;">Telegram Channel</a>
+    </div>`;
+}
   function renderBrands() { const sorted = [...DB.brands].sort((a,b)=> a.name.localeCompare(b.name)); let html = '<h2 style="padding:2rem;">Brands</h2><div class="brand-list">'; sorted.forEach(b => html += `<div class="item-card" style="padding:1.5rem;cursor:pointer;" data-brandid="${b.id}"><h3>${b.name}</h3><p>${b.desc}</p></div>`); html += '</div>'; document.getElementById('mainContent').innerHTML = html; document.querySelectorAll('.item-card[data-brandid]').forEach(card => { card.addEventListener('click', () => { selectedBrandFilter = card.dataset.brandid; navigateTo('allItems'); }); }); }
   
   function renderAllItems(filterBrand = null, categoryFilter = null, sortByPrice = null) {
