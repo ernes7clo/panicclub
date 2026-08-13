@@ -1140,7 +1140,7 @@
    function buildCartPanel(){
     if(cart.length===0) return '<p>Cart is empty</p><button class="main-btn" id="goShoppingBtn">Go shopping</button>';
     let items=cart.map((item,i)=>`<div class="cart-item-mini"><img src="${item.image}" class="cart-thumb"><div style="flex:1;"><b>${item.name}</b><br>size ${item.size}<br>${item.price} RUB</div><button class="remove-cart-item" data-index="${i}" style="background:none;border:none;color:#888;font-size:1.2rem;">x</button></div>`).join('');
-    const shipping=0, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
+    const shipping=700, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
     
     return `<h3>Cart</h3>${items}
       <style>
@@ -1250,7 +1250,7 @@
         if (!email.includes('@')) { alert('Пожалуйста, введите корректный Email (с @) или Telegram (с @).'); return; }
 
         // Если всё ок — считаем итоги
-        const shipping = 0, itemsTotal = cart.reduce((s,i)=>s+i.price,0), total = itemsTotal+shipping;
+        const shipping = 700, itemsTotal = cart.reduce((s,i)=>s+i.price,0), total = itemsTotal+shipping;
         
         // Сохраняем заказ в DB.orders
         DB.orders.unshift({
