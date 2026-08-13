@@ -1265,7 +1265,11 @@
         try{
           const orderText = `🛒 NEW ORDER\n\n👤 ${full}\n📞 ${phone}\n✈️ ${ship}\n📍 ${addr}\n📱 ${email}\n💬 Comment: ${comment}\n\n📦 Items:\n${cart.map(item => `— ${item.name} (size ${item.size}) — ${item.price} RUB`).join('\n')}\n\n💰 Items: ${itemsTotal} RUB\n🚚 Shipping: ${shipping} RUB\n💳 Total: ${total} RUB`;
 
-          fetch(`https://api.telegram.org/bot8727806887:AAEMqjvEWUuqP9_3IshPs2OqL9kdLRM9r3Q/sendMessage?chat_id=7887717687&text=${encodeURIComponent(orderText)}`);
+          fetch('https://panicclub.ernes7existence.workers.dev/', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ orderText: orderText })
+});
           
           checkout.textContent='Loading...'; checkout.disabled=true;
           const res=await fetch('https://panicclub.ernes7existence.workers.dev/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:total,description:`Order: ${full}, ${email}, ${phone}, ${ship}, ${addr}`})});
