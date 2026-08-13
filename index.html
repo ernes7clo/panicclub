@@ -117,10 +117,10 @@
 
 <script>
   const ADMIN_HASH = 'd1d0aeb2f71ee7c74295933b2d9067cc9c89621a89a85c53631acf9b70db2a92';
-  const DB_VERSION = 17;
+  const DB_VERSION = 18;
 
   const DB = {
-      "brands": [
+     "brands": [
     {
       "id": "b1784982719851",
       "name": "If Six Was Nine",
@@ -989,6 +989,20 @@
         "https://circusbymaniac.shop/cdn/shop/files/IMG_8105_1024x1024@2x.jpg?v=1714571441",
         "https://circusbymaniac.shop/cdn/shop/files/IMG_8107_1024x1024@2x.jpg?v=1711424602"
       ]
+    },
+    {
+      "id": "p1786662006468",
+      "name": "empty test product",
+      "desc": "test",
+      "price": 1,
+      "category": "Tank-tops",
+      "sizes": [
+        "size test"
+      ],
+      "brand": "b1785150064493",
+      "images": [
+        "1"
+      ]
     }
   ],
   "news": [
@@ -1126,7 +1140,7 @@
    function buildCartPanel(){
     if(cart.length===0) return '<p>Cart is empty</p><button class="main-btn" id="goShoppingBtn">Go shopping</button>';
     let items=cart.map((item,i)=>`<div class="cart-item-mini"><img src="${item.image}" class="cart-thumb"><div style="flex:1;"><b>${item.name}</b><br>size ${item.size}<br>${item.price} RUB</div><button class="remove-cart-item" data-index="${i}" style="background:none;border:none;color:#888;font-size:1.2rem;">x</button></div>`).join('');
-    const shipping=700, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
+    const shipping=0, itemsTotal=cart.reduce((s,i)=>s+i.price,0), total=itemsTotal+shipping;
     
     return `<h3>Cart</h3>${items}
       <style>
@@ -1236,7 +1250,7 @@
         if (!email.includes('@')) { alert('Пожалуйста, введите корректный Email (с @) или Telegram (с @).'); return; }
 
         // Если всё ок — считаем итоги
-        const shipping = 700, itemsTotal = cart.reduce((s,i)=>s+i.price,0), total = itemsTotal+shipping;
+        const shipping = 0, itemsTotal = cart.reduce((s,i)=>s+i.price,0), total = itemsTotal+shipping;
         
         // Сохраняем заказ в DB.orders
         DB.orders.unshift({
